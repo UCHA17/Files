@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sliding Puzzle Challenge</title>
+    <style>
+        :root {
+            --bg-dark: #0f1020;
+            --bg-darker: #0a0a15;
+            --text-color: #e0e7ff;
+            --primary-color: #4a5aef;
+            --secondary-color: #6a11cb;
+            --accent-color: #2575fc;
+            --success-color: #00f5a0;
+            --error-color: #ff6b6b;
+        }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: var(--bg-dark);
+            font-family: 'Arial', sans-serif;
+            color: #ffffff;
+            flex-direction: column;
+        }
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            background-color: transparent;
+            padding: 15px 20px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1000;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #00ffcc;
+        }
+
+       
+        nav ul {
+            list-style: none;
+            display: flex;
+            padding: 0;
+            margin: 0;
+        }
+
+        nav ul li {
+            margin: 0 10px;
+        }
+        nav ul li a {
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 16px;
+            display: inline-block;
+            padding: 5px 10px;
+            background: linear-gradient(90deg, #aa9f70, #d3c835, #c98b1f);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            transition: transform 0.3s ease;
+        }
+        a {
+            text-decoration: none;
+        }
+        nav ul li a:hover {
+            transform: scale(1.2);
+            background: linear-gradient(90deg, #59d78a, #1c6528, #48b895);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .puzzle-container {
+            background-color: var(--card-dark);
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            text-align: center;
+            margin-top: 80px; /* Adds space below the fixed navbar */
+        }
+        /* Rest of the styles remain the same as in the previous version */
+        h1 {
+            color: var(--text-color);
+            margin-bottom: 20px;
+        }
+        #puzzle-board {
+            display: grid;
+            grid-template-columns: repeat(4, 90px);
+            grid-gap: 10px;
+            margin: 20px 0;
+        }
+        .puzzle-tile {
+            width: 90px;
+            height: 90px;
+            background-color: var(--accent-color);
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            user-select: none;
+        }
+        .puzzle-tile:hover {
+            transform: scale(1.05);
+            background-color: #3d5a80;
+        }
+        .empty-tile {
+            background-color: transparent;
+            border: 2px dashed var(--text-color);
+            cursor: default;
+            opacity: 0.5;
+        }
+        #moves, #time {
+            font-size: 18px;
+            margin: 10px;
+            color: #e0e0e0;
+        }
+        .game-controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .game-button {
+            background-color: var(--text-color);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .game-button:hover {
+            background-color: #ff6b81;
+        }
+        .solved {
+            background-color: #2ecc71 !important;
+            color: white !important;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <a href="Home.HTML" class="logo">🎮 Game Zone</a>
+        <nav>
+            <ul>
+                <li><a href="Home.HTML">Home</a></li>
+                
+                <li><a href="about.html">About</a></li>
+                <li><a href="chat.html">Chat</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <div class="puzzle-container">
+        <h1>Sliding Puzzle Challenge</h1>
+        <div id="moves">Moves: 0</div>
+        <div id="time">Time: 0 seconds</div>
+        <div id="puzzle-board"></div>
+        <div class="game-controls">
+            <button class="game-button" onclick="startGame()">New Game</button>
+        </div>
+    </div>
+
+    <script>
+        // Script remains the same as in the previous version
+        const boardSize = 4;
+        const totalTiles = boardSize * boardSize;
+        let board = [];
+        let emptyTileIndex = 0;
+        let moves = 0;
+        let startTime;
+        let timerInterval;
+
+        const puzzleBoard = document.getElementById('puzzle-board');
+        const movesElement = document.getElementById('moves');
+        const timeElement = document.getElementById('time');
+
+        function createBoard() {
+            board = Array.from({length: totalTiles}, (_, i) => i);
+            shuffleBoard();
+        }
+
+        function shuffleBoard() {
+            for (let i = board.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [board[i], board[j]] = [board[j], board[i]];
+            }
+            emptyTileIndex = board.indexOf(0);
+            renderBoard();
+        }
+
+        function renderBoard() {
+            puzzleBoard.innerHTML = '';
+            puzzleBoard.style.gridTemplateColumns = `repeat(${boardSize}, 90px)`;
+
+            board.forEach((value, index) => {
+                const tile = document.createElement('div');
+                tile.classList.add('puzzle-tile');
+                
+                if (value === 0) {
+                    tile.classList.add('empty-tile');
+                } else {
+                    tile.textContent = value;
+                    tile.onclick = () => moveTile(index);
+                }
+
+                puzzleBoard.appendChild(tile);
+            });
+        }
+
+        function moveTile(clickedIndex) {
+            const allowedMoves = [
+                clickedIndex - boardSize, 
+                clickedIndex + boardSize, 
+                clickedIndex - 1, 
+                clickedIndex + 1
+            ];
+
+            if (allowedMoves.includes(emptyTileIndex) && 
+                Math.abs(clickedIndex % boardSize - emptyTileIndex % boardSize) <= 1) {
+                
+                [board[clickedIndex], board[emptyTileIndex]] = [board[emptyTileIndex], board[clickedIndex]];
+                emptyTileIndex = clickedIndex;
+                
+                moves++;
+                movesElement.textContent = `Moves: ${moves}`;
+                
+                renderBoard();
+                checkWin();
+            }
+        }
+
+        function checkWin() {
+            const winningSequence = Array.from({length: totalTiles}, (_, i) => i);
+            if (JSON.stringify(board) === JSON.stringify(winningSequence)) {
+                clearInterval(timerInterval);
+                alert(`Congratulations! You solved the puzzle in ${moves} moves!`);
+                Array.from(puzzleBoard.children).forEach(tile => {
+                    if (!tile.classList.contains('empty-tile')) {
+                        tile.classList.add('solved');
+                    }
+                });
+            }
+        }
+
+        function startGame() {
+            moves = 0;
+            movesElement.textContent = 'Moves: 0';
+            
+            startTime = new Date();
+            timerInterval = setInterval(() => {
+                const currentTime = Math.floor((new Date() - startTime) / 1000);
+                timeElement.textContent = `Time: ${currentTime} seconds`;
+            }, 1000);
+            createBoard();
+        }
+        
+        startGame();
+    </script>
+</body>
+</html>

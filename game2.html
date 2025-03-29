@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>🧮 Math Master Challenge</title>
+    <style>
+        :root {
+            --bg-dark: #121212;
+            --bg-darker: #0a0a0a;
+            --text-color: #e0e0e0;
+            --primary: #6c5ce7;
+            --secondary: #a29bfe;
+            --accent: #00cec9;
+            --success: #00e676;
+            --error: #ff5252;
+            --card-bg: #1e1e1e;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 80px;
+        }
+
+        /* Header/Navbar Styles */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            background-color: var(--bg-darker);
+            padding: 15px 5%;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1000;
+            border-bottom: 1px solid rgba(108, 92, 231, 0.2);
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            padding: 0;
+            margin: 0;
+            gap: 1.5rem;
+        }
+
+        nav ul li {
+            position: relative;
+        }
+
+        nav ul li a {
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1rem;
+            display: inline-block;
+            padding: 5px 10px;
+            color: var(--secondary);
+            transition: all 0.3s ease;
+        }
+
+        nav ul li a:hover {
+            color: var(--accent);
+        }
+
+        /* Game Container Styles */
+        .game-container {
+            background-color: var(--card-bg);
+            border-radius: 15px;
+            padding: 30px;
+            width: 500px;
+            max-width: 95%;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(108, 92, 231, 0.3);
+            margin-bottom: 30px;
+        }
+
+        .hint-popup {
+            position: absolute;
+            top: 80px;
+            right: 15px;
+            background-color: #2d2d2d;
+            border: 1px solid var(--accent);
+            border-radius: 10px;
+            padding: 15px;
+            width: 250px;
+            display: none;
+            z-index: 10;
+            line-height: 1.5;
+        }
+
+        .game-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .stats {
+            display: flex;
+            gap: 20px;
+            font-size: 1.1rem;
+        }
+
+        .stats div {
+            background-color: #2d2d2d;
+            padding: 8px 15px;
+            border-radius: 8px;
+        }
+
+        .sequence {
+            font-size: 1.8rem;
+            background-color: #2d2d2d;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            margin-bottom: 25px;
+            letter-spacing: 3px;
+            font-weight: bold;
+            color: var(--accent);
+            border: 1px solid rgba(108, 92, 231, 0.3);
+        }
+
+        .input-container {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        input {
+            padding: 12px 15px;
+            font-size: 1.1rem;
+            width: 150px;
+            background-color: #2d2d2d;
+            color: var(--text-color);
+            border: 2px solid var(--primary);
+            border-radius: 8px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 10px rgba(0, 206, 201, 0.3);
+        }
+
+        button {
+            padding: 12px 25px;
+            font-size: 1.1rem;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(108, 92, 231, 0.4);
+        }
+
+        #result {
+            text-align: center;
+            font-weight: bold;
+            min-height: 40px;
+            margin: 20px 0;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .difficulty-indicator {
+            width: 100%;
+            height: 6px;
+            background: linear-gradient(to right, var(--success), var(--error));
+            margin-top: 15px;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .difficulty-progress {
+            height: 100%;
+            width: 0%;
+            background: var(--success);
+            transition: width 0.5s ease;
+        }
+
+        #logo {
+            font-size: 2rem;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+            position: absolute;
+            top: 15px;
+            left: 15px;
+        }
+
+        #logo:hover {
+            transform: scale(1.2);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 600px) {
+            header {
+                flex-direction: column;
+                padding: 15px;
+            }
+            
+            .logo {
+                margin-bottom: 15px;
+            }
+            
+            nav ul {
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 1rem;
+            }
+            
+            .game-container {
+                padding: 20px;
+            }
+            
+            .sequence {
+                font-size: 1.5rem;
+                padding: 15px;
+            }
+            
+            .input-container {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            input {
+                width: 100%;
+            }
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header>
+        <a href="Home.HTML" class="logo">🎮 Game Zone</a>
+        <nav>
+            <ul>
+                <li><a href="Home.HTML">Home</a></li>
+                
+                <li><a href="about.html">About</a></li>
+                <li><a href="#">Chat</a></li>
+            </ul>
+        </nav>
+    </header>
+    
+    <div class="game-container">
+        <div id="logo">🧩</div>
+        <div class="hint-popup" id="hintPopup">
+            🕵️ Discover the numerical pattern! 
+            • Carefully observe the sequence
+            • Find the pattern between the numbers
+            • Guess the next number
+            • The more rounds you complete, the more difficult it becomes
+        </div>
+        <div class="game-header">
+            <div class="stats">
+                <div>Round: <span id="roundDisplay">1</span></div>
+                <div>Time: <span id="timerDisplay">30</span>s ⏰</div>
+            </div>
+        </div>
+        <div class="sequence" id="sequenceDisplay"></div>
+        <div class="input-container">
+            <input type="number" id="userAnswer" placeholder="Answer" autocomplete="off">
+            <button onclick="checkAnswer()">✔️ Check</button>
+        </div>
+        <div id="result"></div>
+        <div class="difficulty-indicator">
+            <div class="difficulty-progress" id="difficultyBar"></div>
+        </div>
+    </div>
+
+    <script>
+        let currentSequence = [];
+        let correctAnswer = 0;
+        let sequenceType = 0;
+        let round = 1;
+        let timer = 30;
+        let timerInterval;
+
+        // Logo hint functionality
+        document.getElementById('logo').addEventListener('click', () => {
+            const hintPopup = document.getElementById('hintPopup');
+            hintPopup.style.display = hintPopup.style.display === 'block' ? 'none' : 'block';
+        });
+
+        function startTimer() {
+            clearInterval(timerInterval);
+            timer = 30;
+            document.getElementById('timerDisplay').textContent = timer;
+            timerInterval = setInterval(() => {
+                timer--;
+                document.getElementById('timerDisplay').textContent = timer;
+                
+                if (timer <= 0) {
+                    clearInterval(timerInterval);
+                    endGame();
+                }
+            }, 1000);
+        }
+
+        function generateSequence() {
+            // Increase difficulty based on round
+            const difficulty = Math.min(round / 10, 1);
+            document.getElementById('difficultyBar').style.width = `${difficulty * 100}%`;
+            
+            // More complex mathematical sequences with whole numbers
+            sequenceType = Math.floor(Math.random() * 6);
+            
+            switch(sequenceType) {
+                case 0: // Quadratic Whole Number Pattern
+                    const quadBase = Math.floor(Math.random() * (3 + round));
+                    currentSequence = [
+                        quadBase, 
+                        quadBase * quadBase, 
+                        quadBase * quadBase * quadBase
+                    ];
+                    correctAnswer = Math.pow(quadBase, 4);
+                    break;
+                
+                case 1: // Multiplicative Growth
+                    const multBase = Math.floor(Math.random() * (3 + round));
+                    currentSequence = [
+                        multBase, 
+                        multBase * 2, 
+                        multBase * 4
+                    ];
+                    correctAnswer = multBase * 8;
+                    break;
+                
+                case 2: // Exponential Whole Numbers
+                    const expBase = Math.floor(Math.random() * (2 + round));
+                    currentSequence = [
+                        expBase, 
+                        expBase * expBase, 
+                        expBase * expBase * expBase
+                    ];
+                    correctAnswer = Math.pow(expBase, 4);
+                    break;
+                
+                case 3: // Increasing Difference
+                    const startNum = Math.floor(Math.random() * (3 + round));
+                    currentSequence = [
+                        startNum, 
+                        startNum + 2, 
+                        startNum + 5
+                    ];
+                    correctAnswer = startNum + 9;
+                    break;
+                
+                case 4: // Alternating Sequence
+                    const altBase = Math.floor(Math.random() * (3 + round));
+                    currentSequence = [
+                        altBase, 
+                        altBase * 2, 
+                        altBase + 1
+                    ];
+                    correctAnswer = altBase * 3;
+                    break;
+                
+                case 5: // Prime Number Increments
+                    const primes = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29];
+                    const primeStart = Math.floor(Math.random() * (6 - round));
+                    currentSequence = [
+                        primes[primeStart], 
+                        primes[primeStart + 1], 
+                        primes[primeStart + 2]
+                    ];
+                    correctAnswer = primes[primeStart + 3];
+                    break;
+            }
+
+            document.getElementById('sequenceDisplay').textContent = 
+                currentSequence.join(', ') + ', ?';
+            document.getElementById('result').textContent = '';
+            document.getElementById('userAnswer').value = '';
+            
+            startTimer();
+        }
+
+        function checkAnswer() {
+            const userAnswer = parseInt(document.getElementById('userAnswer').value);
+            const resultDiv = document.getElementById('result');
+
+            if (userAnswer === correctAnswer) {
+                resultDiv.innerHTML = '🎉 Correct! Continuing... 🚀';
+                resultDiv.style.color = 'var(--success)';
+                
+                round++;
+                document.getElementById('roundDisplay').textContent = round;
+                setTimeout(generateSequence, 1500);
+            } else {
+                resultDiv.innerHTML = `❌ Incorrect. The correct answer is ${correctAnswer}. 🤔`;
+                resultDiv.style.color = 'var(--error)';
+                endGame();
+            }
+        }
+
+        function endGame() {
+            clearInterval(timerInterval);
+            document.getElementById('result').innerHTML = 
+                `🏁 Game Over! You completed ${round - 1} rounds. 🏆`;
+            
+            // Reset game after few seconds
+            setTimeout(() => {
+                round = 1;
+                document.getElementById('roundDisplay').textContent = round;
+                generateSequence();
+            }, 3000);
+        }
+
+        // Handle Enter key press
+        document.getElementById('userAnswer').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                checkAnswer();
+            }
+        });
+
+        // Start the game when the page loads
+        generateSequence();
+    </script>
+</body>
+</html>

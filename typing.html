@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <title>Typing Master - Adaptive Typing Training</title>
+  <meta name="description" content="Free typing training tool that helps you improve typing speed and accuracy with progressive difficulty levels.">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-color: #1e1e2e;
+      --text-color: #cdd6f4;
+      --accent-color: #89b4fa;
+      --error-color: #f38ba8;
+      --correct-color: #a6e3a1;
+      --neutral-color: #6c7086;
+      --container-color: #181825;
+      --highlight-color: #313244;
+      --timer-color: #fab387;
+      --nav-bg: #181825;
+      --nav-hover: #313244;
+    }
+
+    [data-theme="light"] {
+      --bg-color: #eff1f5;
+      --text-color: #4c4f69;
+      --accent-color: #1e66f5;
+      --error-color: #d20f39;
+      --correct-color: #40a02b;
+      --neutral-color: #9ca0b0;
+      --container-color: #e6e9ef;
+      --highlight-color: #ccd0da;
+      --timer-color: #fe640b;
+      --nav-bg: #e6e9ef;
+      --nav-hover: #ccd0da;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Roboto Mono', monospace;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      line-height: 1.6;
+      transition: background-color 0.3s ease, color 0.3s ease;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Navigation Styles - Right Aligned */
+    nav {
+      background-color: var(--nav-bg);
+      padding: 1rem 2rem;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    nav ul {
+      display: flex;
+      list-style: none;
+      gap: 2rem;
+      margin: 0;
+      padding: 0;
+    }
+
+    nav a {
+      color: var(--text-color);
+      text-decoration: none;
+      font-weight: 500;
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      transition: background-color 0.3s ease;
+    }
+
+    nav a:hover {
+      background-color: var(--nav-hover);
+    }
+
+    /* Main Content Wrapper */
+    .content-wrapper {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    #app {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 20px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      flex-grow: 1;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--neutral-color);
+    }
+
+    .header-left, .header-right {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .app-title {
+      font-size: 24px;
+      font-weight: 500;
+      color: var(--accent-color);
+    }
+
+    .separator {
+      color: var(--neutral-color);
+    }
+
+    .icon-button, .theme-toggle {
+      background: none;
+      border: none;
+      font-size: 18px;
+      cursor: pointer;
+      color: var(--text-color);
+      transition: transform 0.2s;
+      padding: 5px;
+    }
+
+    .icon-button:hover, .theme-toggle:hover {
+      transform: scale(1.1);
+    }
+
+    .main-container {
+      display: flex;
+      flex-direction: column;
+      gap: 30px;
+      flex-grow: 1;
+    }
+
+    #metrics {
+      display: flex;
+      justify-content: space-between;
+      font-size: 18px;
+      margin-bottom: 10px;
+    }
+
+    .metrics-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .typing-section {
+      background-color: var(--container-color);
+      border-radius: 8px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .text-display {
+      font-size: 20px;
+      line-height: 1.7;
+      min-height: 120px;
+      position: relative;
+      font-weight: bold;
+    }
+
+    .visible-input {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      font-size: 20px;
+      line-height: 1.7;
+      pointer-events: none;
+    }
+
+    .char {
+      position: relative;
+      white-space: pre;
+    }
+
+    .correct {
+      color: var(--correct-color);
+    }
+
+    .incorrect {
+      color: var(--error-color);
+      text-decoration: underline;
+    }
+
+    .current {
+      background-color: var(--highlight-color);
+      border-radius: 2px;
+    }
+
+    .progress-and-next {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .progress-container {
+      flex-grow: 1;
+    }
+
+    .progress-bar-background {
+      height: 8px;
+      background-color: var(--highlight-color);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      background-color: var(--accent-color);
+      border-radius: 4px;
+      transition: width 0.3s ease;
+    }
+
+    .next-button {
+      background-color: var(--accent-color);
+      color: var(--container-color);
+      border: none;
+      border-radius: 4px;
+      padding: 8px 16px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    .next-button:hover {
+      background-color: var(--text-color);
+    }
+
+    .stats-section {
+      margin-top: 20px;
+      display: flex;
+      gap: 20px;
+    }
+
+    .stats-container {
+      background-color: var(--container-color);
+      border-radius: 8px;
+      padding: 20px;
+      flex-grow: 1;
+      min-height: 200px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .stats-heading {
+      font-size: 18px;
+      margin-bottom: 15px;
+      color: var(--accent-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .history-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 12px;
+      background-color: var(--highlight-color);
+      border-radius: 4px;
+    }
+
+    .game-info {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 15px;
+    }
+
+    .timer {
+      font-size: 24px;
+      color: var(--timer-color);
+      font-weight: bold;
+    }
+
+    .level-display {
+      font-size: 18px;
+    }
+
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.7);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    .modal.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-content {
+      background-color: var(--container-color);
+      padding: 30px;
+      border-radius: 8px;
+      width: 90%;
+      max-width: 500px;
+      text-align: center;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .modal-title {
+      font-size: 24px;
+      margin-bottom: 15px;
+      color: var(--accent-color);
+    }
+
+    .modal-stats {
+      margin: 20px 0;
+      font-size: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .start-button {
+      background-color: var(--accent-color);
+      color: var(--container-color);
+      border: none;
+      border-radius: 4px;
+      padding: 12px 24px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+      margin-top: 15px;
+    }
+
+    .start-button:hover {
+      background-color: var(--text-color);
+    }
+
+    @media (max-width: 768px) {
+      nav ul {
+        gap: 1rem;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+      
+      nav {
+        justify-content: center;
+      }
+      
+      #app {
+        padding: 15px;
+      }
+      
+      .header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+      }
+      
+      .header-right {
+        width: 100%;
+        justify-content: space-between;
+      }
+      
+      .text-display {
+        font-size: 18px;
+      }
+      
+      .stats-section {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <ul>
+      <li><a href="Home.HTML">Home</a></li>
+      
+      <li><a href="about.html">About</a></li>
+      <li><a href="chat.html">Chat</a></li>
+    </ul>
+  </nav>
+  
+  <div class="content-wrapper">
+    <div id="app">
+      <div class="header">
+        <div class="header-left">
+          <span class="app-title">Typing Master</span>
+          <span class="separator">|</span>
+          <span>Improve your typing skills</span>
+        </div>
+        
+        <div class="header-right">
+          <button id="resetStats" class="icon-button" title="Reset statistics">🗑️</button>
+          <button id="darkModeToggle" class="theme-toggle" title="Toggle dark mode">
+            <span class="light-icon">☀️</span>
+            <span class="dark-icon">🌙</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="main-container">
+        <div class="game-info">
+          <div class="metrics-item">
+            <span>Time:</span>
+            <span id="timer" class="timer">0</span>
+          </div>
+          <div class="metrics-item">
+            <span>Level:</span>
+            <span id="level" class="level-display">1</span>
+          </div>
+        </div>
+        
+        <div id="metrics">
+          <span id="wpm">WPM: 0</span>
+          <span id="accuracy">Accuracy: 100%</span>
+          <span id="score">Score: 0</span>
+        </div>
+        
+        <div class="typing-section">
+          <div id="textDisplay" class="text-display"></div>
+          <div id="visibleInput" class="visible-input"></div>
+          
+          <div class="progress-and-next">
+            <div class="progress-container">
+              <div class="progress-bar-background">
+                <div class="progress-bar" id="progressBar"></div>
+              </div>
+            </div>
+            <button id="nextButton" class="next-button">Next →</button>
+          </div>
+          <textarea id="inputArea" style="position: absolute; opacity: 0; height: 0; width: 0; z-index: -1;" autofocus></textarea>
+        </div>
+
+        <div class="stats-section">
+          <div class="stats-container">
+            <div class="stats-heading">
+              <span>Performance History</span>
+            </div>
+            <div id="historyList" class="history-list"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div id="startModal" class="modal active">
+    <div class="modal-content">
+      <h2 class="modal-title">Welcome to Typing Master</h2>
+      <p>Improve your typing speed and accuracy with our adaptive training system.</p>
+      <p>Each level gets progressively harder with longer sentences.</p>
+      <button id="startGameButton" class="start-button">Start Training</button>
+    </div>
+  </div>
+  
+  <div id="endModal" class="modal">
+    <div class="modal-content">
+      <h2 class="modal-title">Training Complete!</h2>
+      <div class="modal-stats">
+        <div>Final Score: <span id="finalScore">0</span></div>
+        <div>Average WPM: <span id="avgWpm">0</span></div>
+        <div>Average Accuracy: <span id="avgAccuracy">0%</span></div>
+        <div>Highest Level Reached: <span id="maxLevel">0</span></div>
+      </div>
+      <button id="restartButton" class="start-button">Play Again</button>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Game elements
+      const textDisplay = document.getElementById('textDisplay');
+      const visibleInput = document.getElementById('visibleInput');
+      const inputArea = document.getElementById('inputArea');
+      const timerElement = document.getElementById('timer');
+      const levelElement = document.getElementById('level');
+      const wpmElement = document.getElementById('wpm');
+      const accuracyElement = document.getElementById('accuracy');
+      const scoreElement = document.getElementById('score');
+      const progressBar = document.getElementById('progressBar');
+      const nextButton = document.getElementById('nextButton');
+      const historyList = document.getElementById('historyList');
+      const startModal = document.getElementById('startModal');
+      const endModal = document.getElementById('endModal');
+      const startGameButton = document.getElementById('startGameButton');
+      const restartButton = document.getElementById('restartButton');
+      const resetStats = document.getElementById('resetStats');
+      const darkModeToggle = document.getElementById('darkModeToggle');
+      
+      // Game sentences - increasingly difficult
+      const sentences = [
+        "The quick brown fox jumps over the lazy dog.",
+        "She sells seashells by the seashore while watching the waves.",
+        "Programming requires patience, logic, and attention to detail to master effectively.",
+        "The magnificent elephant gracefully wandered through the lush savanna searching for water during the dry season.",
+        "Scientists discovered that regular exercise improves cognitive function and reduces stress levels in adults of all ages.",
+        "The ancient library contained thousands of manuscripts from civilizations that flourished long before modern history began recording events.",
+        "Developing sustainable technology solutions requires innovative thinking combined with practical engineering approaches to address global challenges we face today.",
+        "Neuroscientists have demonstrated that learning multiple languages during childhood enhances neural connectivity and improves problem-solving abilities throughout life.",
+        "The archaeological expedition uncovered artifacts suggesting that advanced trading networks existed between distant civilizations thousands of years earlier than previously thought.",
+        "Environmental researchers tracking climate patterns discovered that ocean temperature fluctuations significantly impact weather systems across continents in ways previously unrecognized by meteorologists.",
+        "Quantum computing promises to revolutionize data processing by solving complex problems exponentially faster than conventional methods, potentially transforming fields from medicine to cryptography.",
+        "The comprehensive analysis of biodiversity in tropical rainforests revealed that countless species remain undiscovered despite decades of research by international teams of dedicated scientists.",
+        "Advancements in renewable energy technology have accelerated dramatically in recent years, making sustainable power solutions increasingly competitive with traditional fossil fuel infrastructure on both efficiency and cost metrics.",
+        "The intricate relationship between human gut microbiome composition and neurological health continues to surprise medical researchers, suggesting potential treatments for conditions previously considered unrelated to digestive processes.",
+        "Historians examining recently digitized archives found evidence challenging conventional narratives about cultural exchanges during medieval periods, revealing sophisticated networks of knowledge transmission between Eastern and Western intellectual traditions."
+      ];
+
+      // Game state variables
+      let gameActive = false;
+      let currentLevel = 0;
+      let currentSentence = "";
+      let startTime = 0;
+      let timerInterval = null;
+      let timeLeft = 0;
+      let score = 0;
+      let typingHistory = [];
+      let darkMode = true;
+      
+      // Initialize game
+      function initializeGame() {
+        loadSettings();
+        setupEventListeners();
+      }
+      
+      // Load saved settings
+      function loadSettings() {
+        const savedHistory = localStorage.getItem('typingHistory');
+        if (savedHistory) {
+          typingHistory = JSON.parse(savedHistory);
+          updateHistoryDisplay();
+        }
+        
+        const savedTheme = localStorage.getItem('darkMode');
+        if (savedTheme !== null) {
+          darkMode = savedTheme === 'true';
+          updateTheme();
+        }
+      }
+      
+      // Setup event listeners
+      function setupEventListeners() {
+        startGameButton.addEventListener('click', startGame);
+        restartButton.addEventListener('click', startGame);
+        nextButton.addEventListener('click', nextLevel);
+        resetStats.addEventListener('click', resetStatistics);
+        darkModeToggle.addEventListener('click', toggleDarkMode);
+        
+        // Ensure input is always focused
+        document.addEventListener('click', function() {
+          if (gameActive) {
+            inputArea.focus();
+          }
+        });
+        
+        inputArea.addEventListener('input', handleInput);
+        inputArea.addEventListener('keydown', function(e) {
+          if (e.key === 'Tab') {
+            e.preventDefault();
+            nextLevel();
+          }
+        });
+      }
+      
+      // Start the game
+      function startGame() {
+        startModal.classList.remove('active');
+        endModal.classList.remove('active');
+        
+        currentLevel = 0;
+        score = 0;
+        updateScore();
+        
+        nextLevel();
+      }
+      
+      // Move to the next level
+      function nextLevel() {
+        if (currentLevel >= sentences.length) {
+          endGame();
+          return;
+        }
+        
+        currentSentence = sentences[currentLevel];
+        textDisplay.textContent = currentSentence;
+        visibleInput.innerHTML = '';
+        inputArea.value = '';
+        
+        // Update level display
+        currentLevel++;
+        levelElement.textContent = currentLevel;
+        
+        // Calculate time based on sentence length and level
+        timeLeft = 10 + Math.floor(currentSentence.length * 0.1) + currentLevel;
+        timerElement.textContent = timeLeft;
+        
+        // Reset progress bar
+        progressBar.style.width = '0%';
+        
+        // Start timer if not already active
+        if (!gameActive) {
+          gameActive = true;
+          startTime = Date.now();
+        }
+        
+        // Start/reset the countdown timer
+        clearInterval(timerInterval);
+        timerInterval = setInterval(updateTimer, 1000);
+        
+        // Focus the input area
+        inputArea.focus();
+      }
+      
+      // Update timer
+      function updateTimer() {
+        timeLeft--;
+        timerElement.textContent = timeLeft;
+        
+        if (timeLeft <= 0) {
+          clearInterval(timerInterval);
+          // Check if the current level was completed
+          if (inputArea.value.length < currentSentence.length) {
+            // Time's up - record results and move to next level
+            recordResults(false);
+            nextLevel();
+          }
+        }
+      }
+      
+      // Handle input
+      function handleInput() {
+        const userInput = inputArea.value;
+        let html = '';
+        let correctCount = 0;
+        
+        // Compare each character
+        for (let i = 0; i < currentSentence.length; i++) {
+          if (i < userInput.length) {
+            if (userInput[i] === currentSentence[i]) {
+              html += `<span class="char correct">${currentSentence[i]}</span>`;
+              correctCount++;
+            } else {
+              html += `<span class="char incorrect">${currentSentence[i]}</span>`;
+            }
+          } else if (i === userInput.length) {
+            html += `<span class="char current">${currentSentence[i]}</span>`;
+          } else {
+            html += `<span class="char">${currentSentence[i]}</span>`;
+          }
+        }
+        
+        visibleInput.innerHTML = html;
+        
+        // Calculate progress
+        const progress = (userInput.length / currentSentence.length) * 100;
+        progressBar.style.width = `${progress}%`;
+        
+        // Calculate WPM and accuracy
+        updateMetrics(userInput, correctCount);
+        
+        // Check if current sentence is completed
+        if (userInput.length === currentSentence.length) {
+          recordResults(true);
+          clearInterval(timerInterval);
+          // Small delay before moving to next level
+          setTimeout(nextLevel, 500);
+        }
+      }
+      
+      // Update WPM and accuracy metrics
+      function updateMetrics(userInput, correctCount) {
+        if (userInput.length === 0) return;
+        
+        // Calculate WPM (words per minute)
+        const elapsedMinutes = (Date.now() - startTime) / 60000;
+        const words = userInput.length / 5; // Standard: 5 characters = 1 word
+        const wpm = Math.round(words / elapsedMinutes);
+        
+        // Calculate accuracy
+        const accuracy = Math.round((correctCount / userInput.length) * 100);
+        
+        // Update display
+        wpmElement.textContent = `WPM: ${wpm}`;
+        accuracyElement.textContent = `Accuracy: ${accuracy}%`;
+      }
+      
+      // Record level results
+      function recordResults(completed) {
+        const userInput = inputArea.value;
+        let correctCount = 0;
+        
+        // Count correct characters
+        for (let i = 0; i < userInput.length; i++) {
+          if (i < currentSentence.length && userInput[i] === currentSentence[i]) {
+            correctCount++;
+          }
+        }
+        
+        // Calculate metrics
+        const elapsedMinutes = (Date.now() - startTime) / 60000;
+        const words = userInput.length / 5;
+        const wpm = Math.round(words / elapsedMinutes);
+        const accuracy = userInput.length > 0 ? Math.round((correctCount / userInput.length) * 100) : 0;
+        
+        // Calculate level score: correct characters - incorrect characters
+        const levelScore = correctCount - (userInput.length - correctCount);
+        score += levelScore > 0 ? levelScore : 0;
+        updateScore();
+        
+        // Record level data
+        typingHistory.unshift({
+          level: currentLevel,
+          wpm: wpm,
+          accuracy: accuracy,
+          completed: completed,
+          date: new Date().toISOString()
+        });
+        
+        // Limit history size
+        if (typingHistory.length > 10) {
+          typingHistory.pop();
+        }
+        
+        // Save to local storage
+        localStorage.setItem('typingHistory', JSON.stringify(typingHistory));
+        
+        // Update history display
+        updateHistoryDisplay();
+      }
+      
+      // Update history display
+      function updateHistoryDisplay() {
+        historyList.innerHTML = '';
+        
+        typingHistory.forEach(entry => {
+          const historyItem = document.createElement('div');
+          historyItem.className = 'history-item';
+          historyItem.innerHTML = `
+            <span>Level ${entry.level}</span>
+            <span>${entry.wpm} WPM</span>
+            <span>${entry.accuracy}%</span>
+            <span>${entry.completed ? '✓' : '✗'}</span>
+          `;
+          historyList.appendChild(historyItem);
+        });
+      }
+      
+      // Update score display
+      function updateScore() {
+        scoreElement.textContent = `Score: ${score}`;
+      }
+      
+      // End the game
+      function endGame() {
+        gameActive = false;
+        clearInterval(timerInterval);
+        
+        // Calculate final statistics
+        let totalWpm = 0;
+        let totalAccuracy = 0;
+        let completedLevels = 0;
+        
+        typingHistory.forEach(entry => {
+          totalWpm += entry.wpm;
+          totalAccuracy += entry.accuracy;
+          if (entry.completed) completedLevels++;
+        });
+        
+        const avgWpm = typingHistory.length > 0 ? Math.round(totalWpm / typingHistory.length) : 0;
+        const avgAccuracy = typingHistory.length > 0 ? Math.round(totalAccuracy / typingHistory.length) : 0;
+        
+        // Update final stats in modal
+        document.getElementById('finalScore').textContent = score;
+        document.getElementById('avgWpm').textContent = avgWpm;
+        document.getElementById('avgAccuracy').textContent = avgAccuracy + '%';
+        document.getElementById('maxLevel').textContent = currentLevel;
+        
+        // Show end modal
+        endModal.classList.add('active');
+      }
+      
+      // Reset statistics
+      function resetStatistics() {
+        if (confirm('Are you sure you want to reset all statistics?')) {
+          typingHistory = [];
+          localStorage.removeItem('typingHistory');
+          updateHistoryDisplay();
+        }
+      }
+      
+      // Toggle dark/light mode
+      function toggleDarkMode() {
+        darkMode = !darkMode;
+        updateTheme();
+        localStorage.setItem('darkMode', darkMode);
+      }
+      
+      // Update theme
+      function updateTheme() {
+        document.documentElement.setAttribute('data-theme', darkMode ? 'dark' : 'light');
+      }
+      
+      // Initialize the game
+      initializeGame();
+    });
+  </script>
+</body>
+</html>
